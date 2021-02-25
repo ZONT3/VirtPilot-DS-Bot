@@ -4,12 +4,14 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import ru.vpilot.dsbot.listeners.Greetings;
 import ru.vpilot.dsbot.loops.LMemberList;
 import ru.vpilot.dsbot.tools.MemberList;
 import ru.zont.dsbot2.ZDSBot;
 import ru.zont.dsbot2.ZDSBotBuilder;
 import ru.zont.dsbot2.commands.implement.Clear;
 import ru.zont.dsbot2.commands.implement.Help;
+import ru.zont.dsbot2.commands.implement.Say;
 import ru.zont.dsbot2.tools.ZDSBMessages;
 
 import javax.security.auth.login.LoginException;
@@ -32,6 +34,8 @@ public class Main {
     public static class Config extends ru.zont.dsbot2.Config {
         public final Entry channel_list = new Entry("0");
         public final Entry roles_list = new Entry("0");
+        public final Entry role_checked = new Entry("0");
+        public final Entry message_checkpoint = new Entry("0");
 
         public Config() {
             super.prefix = new Entry("p.");
@@ -47,10 +51,10 @@ public class Main {
                 .defaultSetup()
                 .setConfig(new Config())
                 .addCommands(Help.class,
-                        Clear.class
+                        Clear.class, Say.class
                 )
                 .addLoops(LMemberList.class)
-                .addListeners();
+                .addListeners(/*new Greetings()*/);
 
         builder.getJdaBuilder().enableIntents(GatewayIntent.GUILD_MESSAGE_REACTIONS);
 
