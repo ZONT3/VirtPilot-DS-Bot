@@ -1,0 +1,4 @@
+rootProject.name = 'VP-DS-Bot'
+include ":core"
+project(':core').projectDir = new File(settingsDir, '../DS-Bot-CORE')
+
