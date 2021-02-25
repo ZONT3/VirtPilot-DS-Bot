@@ -6,10 +6,10 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 import ru.vpilot.dsbot.Strings;
-import ru.zont.dsbot2.tools.Commons;
 import ru.zont.dsbot2.tools.ZDSBMessages;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class MemberList {
@@ -24,9 +24,8 @@ public class MemberList {
 
                 String roleTitle = Strings.STR.getString("memlist.title", roleObj.getAsMention()) + "\n";
                 builders.add(new EmbedBuilder().setColor(roleObj.getColorRaw()));
-                String s = listRole(guild, role, Strings.STR.getString("memlist.role.prefix"));
+                String[] strings = listRole(guild, role, Strings.STR.getString("memlist.role.prefix"), MessageEmbed.TEXT_MAX_LENGTH - roleTitle.length() - 5);
 
-                String[] strings = Commons.splitLength(s, MessageEmbed.TEXT_MAX_LENGTH - roleTitle.length() - 5);
                 for (String string: strings)
                     ZDSBMessages.appendDescriptionSplit(roleTitle + string, builders);
             }
@@ -34,19 +33,26 @@ public class MemberList {
             return builders;
         }
 
-        private static String listRole(Guild g, String role, String prefix) {
+        private static String[] listRole(Guild g, String role, String prefix, int maxlen) {
             List<Member> members = g.findMembers(
                     m -> m.getRoles().stream().anyMatch(
                             r -> r.getId().equals(role)
                     )
             ).get();
 
+            LinkedList<String> list = new LinkedList<>();
             StringBuilder sb = new StringBuilder();
-            for (Member member: members)
-                sb.append(prefix)
-                        .append(member.getAsMention())
-                        .append("\n");
-            return sb.toString();
+            for (Member member: members) {
+                String app = prefix + member.getAsMention() + " `%s`".formatted(member.getUser().getAsTag()) + "\n";
+                if (app.length() + sb.length() > maxlen) {
+                    list.add(sb.toString());
+                    sb = new StringBuilder(app);
+                } else sb.append(app);
+            }
+            if (!sb.toString().isEmpty())
+                list.add(sb.toString());
+
+            return list.toArray(new String[0]);
         }
     }
 }

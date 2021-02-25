@@ -54,7 +54,8 @@ public class Main {
                         Clear.class, Say.class
                 )
                 .addLoops(LMemberList.class)
-                .addListeners(/*new Greetings()*/);
+                .setTechAdmins(List.of("375638389195669504", "331524458806247426"))
+                .addListeners(new Greetings());
 
         builder.getJdaBuilder().enableIntents(GatewayIntent.GUILD_MESSAGE_REACTIONS);
 

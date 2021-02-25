@@ -8,15 +8,15 @@ import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionRemove
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
-import static ru.zont.dsbot2.tools.ZDSBMessages.*;
-import static ru.zont.dsbot2.tools.ZDSBStrings.*;
+import static ru.vpilot.dsbot.Strings.*;
 
 public class Greetings extends ListenerAdapter {
     public static final String ID_ROLE           = "809358190813773836";
     public static final String ID_CHANNEL_CP     = "637552217762562050";
-    public static final String ID_MSG_CP         = "814382443695046706";
+    public static final String ID_MSG_CP         = "814552497468473376";
     public static final String ID_CHANNEL_CP_MSG = "814043680775471136";
     public static final String ID_GUILD          = "620965426381324288";
+    public static final String EMOJI             = "U+1F6EC";
     private String checkpointID;
     private Role role;
 
@@ -26,7 +26,7 @@ public class Greetings extends ListenerAdapter {
         Guild guild = event.getGuild();
         final Message message = guild.getTextChannelById(ID_CHANNEL_CP_MSG).retrieveMessageById(checkpointID).complete();
 
-        addOK(message);
+        message.addReaction(EMOJI).complete();
 
         role = event.getJDA().getRoleById(ID_ROLE);
     }
@@ -35,7 +35,7 @@ public class Greetings extends ListenerAdapter {
     public void onGuildMessageReactionAdd(@NotNull GuildMessageReactionAddEvent event) {
         if (event.getUser().isBot()) return;
         if (!event.getMessageId().equals(checkpointID)) return;
-        if (!event.getReactionEmote().getEmoji().equals(EMOJI_OK)) return;
+        if (!event.getReactionEmote().getAsCodepoints().equalsIgnoreCase(EMOJI)) return;
         addRole(event.getGuild(), event.getMember());
     }
 
@@ -43,7 +43,7 @@ public class Greetings extends ListenerAdapter {
     public void onGuildMessageReactionRemove(@NotNull GuildMessageReactionRemoveEvent event) {
         if (event.getUser() != null && event.getUser().isBot()) return;
         if (!event.getMessageId().equals(checkpointID)) return;
-        if (!event.getReactionEmote().getEmoji().equals(EMOJI_OK)) return;
+        if (!event.getReactionEmote().getAsCodepoints().equalsIgnoreCase(EMOJI)) return;
         rmRole(event.getGuild(), event.getMember());
     }
 
