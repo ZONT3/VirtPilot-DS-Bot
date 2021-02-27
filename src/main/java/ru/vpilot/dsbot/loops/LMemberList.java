@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.TextChannel;
 import ru.vpilot.dsbot.Main.Config;
-import ru.vpilot.dsbot.tools.MemberList;
+import ru.vpilot.dsbot.tools.TMemberList;
 import ru.zont.dsbot2.ConfigCaster;
 import ru.zont.dsbot2.ZDSBot;
 import ru.zont.dsbot2.loops.LoopAdapter;
@@ -15,7 +15,6 @@ import ru.zont.dsbot2.tools.ZDSBMessages;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class LMemberList extends LoopAdapter {
     public LMemberList(ZDSBot.GuildContext context) {
@@ -29,7 +28,7 @@ public class LMemberList extends LoopAdapter {
         String roles = config.roles_list.get();
         if (channel == null || roles.isEmpty() || roles.equals("0")) return;
 
-        ArrayList<EmbedBuilder> list = MemberList.Msg.list(
+        ArrayList<EmbedBuilder> list = TMemberList.Msg.list(
                 getContext().getGuild(),
                 Commons.getIDs(roles));
 

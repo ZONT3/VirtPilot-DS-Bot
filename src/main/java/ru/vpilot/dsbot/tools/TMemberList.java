@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MemberList {
+public class TMemberList {
 
     public static class Msg {
         public static ArrayList<EmbedBuilder> list(Guild guild, List<String> roles) {
