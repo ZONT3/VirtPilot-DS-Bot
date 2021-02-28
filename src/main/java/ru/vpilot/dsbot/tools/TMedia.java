@@ -42,7 +42,7 @@ public class TMedia {
     public static final int SOURCE_YT = 1;
     public static final int SOURCE_TTV = 2;
     public static final String PREFIX_TTV = "ttv:";
-    public static final String PREFIX_YT = "ttv:";
+    public static final String PREFIX_YT = "yt:";
 
     public static final Data<String> data = new Data<>("media");
     public static final String USRPREFIX_TTV = "https://www.twitch.tv/";
@@ -103,7 +103,7 @@ public class TMedia {
         }
 
         public static String getID(String link) {
-            Pattern pattern = Pattern.compile("https?://(\\w+\\.)?youtube\\.com/channel/(\\w+)(/.*)?");
+            Pattern pattern = Pattern.compile("https?://(\\w+\\.)?youtube\\.com/channel/([\\w-]+)(/.*)?");
             Matcher matcher = pattern.matcher(link);
             if (!matcher.find()) {
                 String nLink = findCanonicalLink(link);
