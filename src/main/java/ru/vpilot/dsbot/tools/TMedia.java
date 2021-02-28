@@ -271,7 +271,7 @@ public class TMedia {
             String title  = result.getSnippet().getTitle();
             String desc   = result.getSnippet().getDescription();
             String thumb  = result.getSnippet().getThumbnails().getDefault().getUrl();
-            String link   = VIDPREFIX_YT + result.getId();
+            String link   = VIDPREFIX_YT + result.getId().getVideoId();
 
             return media(name, aLink, aThumb, link, thumb, embedTitle,
                     String.format(STR.getString("media.stream.new.desc"), title, desc), ICON_YT, 0xFF0202);
