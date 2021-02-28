@@ -18,9 +18,7 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.vpilot.dsbot.Globals;
-import ru.vpilot.dsbot.Strings;
 import ru.vpilot.dsbot.loops.LMedia;
-import ru.zont.dsbot2.ErrorReporter;
 import ru.zont.dsbot2.tools.Data;
 
 import java.io.IOException;
@@ -246,7 +244,7 @@ public class TMedia {
 
             return media(userName, link, aThumb, link, thumb,
                     STR.getString("media.stream.new.title"),
-                    String.format(STR.getString("media.stream.new.desc"), title, "")
+                    String.format(STR.getString("media.stream.new.desc"), title, ""), ICON_TTV, 0x6441A4
             );
         }
 
@@ -276,7 +274,7 @@ public class TMedia {
             String link   = VIDPREFIX_YT + result.getId();
 
             return media(name, aLink, aThumb, link, thumb, embedTitle,
-                    String.format(STR.getString("media.stream.new.desc"), title, desc));
+                    String.format(STR.getString("media.stream.new.desc"), title, desc), ICON_YT, 0xFF0202);
 
         }
 
@@ -284,14 +282,15 @@ public class TMedia {
         private static MessageEmbed media(
                 String name, String aLink, String aThumb,
                 String link, String thumb,
-                String embedTitle, String embedDesc) {
+                String embedTitle, String embedDesc,
+                String icon, int color) {
             return new EmbedBuilder()
                     .setAuthor(name, aLink, aThumb)
                     .setTitle(embedTitle, link)
                     .setDescription(embedDesc)
                     .setImage(thumb)
-                    .setThumbnail(ICON_TTV)
-                    .setColor(0x6441A4)
+                    .setThumbnail(icon)
+                    .setColor(color)
                     .build();
         }
     }
