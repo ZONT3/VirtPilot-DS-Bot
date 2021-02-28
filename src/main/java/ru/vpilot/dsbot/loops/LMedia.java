@@ -1,17 +1,18 @@
 package ru.vpilot.dsbot.loops;
 
 import com.github.twitch4j.helix.domain.Stream;
+import com.google.api.services.youtube.model.SearchResult;
 import net.dv8tion.jda.api.entities.TextChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.vpilot.dsbot.Main;
-import ru.vpilot.dsbot.tools.TMedia;
 import ru.zont.dsbot2.ConfigCaster;
+import ru.zont.dsbot2.ErrorReporter;
 import ru.zont.dsbot2.ZDSBot;
 import ru.zont.dsbot2.loops.LoopAdapter;
 import ru.zont.dsbot2.tools.Data;
 
 import static ru.vpilot.dsbot.Main.*;
+import static ru.vpilot.dsbot.tools.TMedia.*;
 import static ru.vpilot.dsbot.tools.TMedia.data;
 
 public class LMedia extends LoopAdapter {
@@ -23,32 +24,57 @@ public class LMedia extends LoopAdapter {
         super(context);
     }
 
+    @SuppressWarnings("RedundantThrows")
     @Override
     public void loop() throws Throwable {
         Config config = ConfigCaster.cast(getContext().getConfig());
-        TextChannel channel = getContext().getTChannel(config.channel_media.get());
-        if (channel == null) {
-            LOG.warn("Media channel not stated");
+        TextChannel channelStr = getContext().getTChannel(config.channel_streams.get());
+        TextChannel channelVid = getContext().getTChannel(config.channel_video.get());
+        if (channelStr == null || channelVid == null) {
+            LOG.warn("Media channel(s) not stated");
             return;
         }
 
-        for (String s: data.get()) {
-            String[] media = s.split(":");
-            if (media.length < 2) {
-                LOG.error("Corrupt media entry occurred");
-                continue;
-            }
-            switch (media[0]) {
-                case "ttv" -> {
-                    for (Stream stream: TMedia.Twitch.getStreams(media[1])) {
-                        if (committed.get().contains(stream.getId())) continue;
+        committed.op(list -> {
+            for (String s: data.get()) {
+                String[] media = s.split(":");
+                if (media.length < 2) {
+                    LOG.error("Corrupt media entry occurred");
+                    continue;
+                }
+                try {
+                    switch (media[0]) {
+                        case "ttv" -> {
+                            for (Stream stream: TTV.getStreams(media[1])) {
+                                if (list.contains(stream.getId())) continue;
 
-                        channel.sendMessage(TMedia.Msg.ttvStream(stream)).queue();
-                        committed.op(l -> l.add(stream.getId()));
+                                channelStr.sendMessage(Msg.ttvStream(stream)).queue();
+                                list.add(stream.getId());
+                            }
+                        }
+                        case "yt" -> {
+                            for (SearchResult video: YT.getVideos(media[1])) {
+                                String bc = video.getSnippet().getLiveBroadcastContent();
+                                String identity;
+                                if ("upcoming".equals(bc))
+                                    identity = video.getId().getVideoId() + ":ucs";
+                                else identity = video.getId().getVideoId();
+
+                                if (list.contains(identity)) continue;
+
+                                switch (bc) {
+                                    case "upcoming" -> channelStr.sendMessage(Msg.ytStreamPlan(video)).queue();
+                                    case "live" ->     channelStr.sendMessage(    Msg.ytStream(video)).queue();
+                                    default ->         channelVid.sendMessage(     Msg.ytVideo(video)).queue();
+                                }
+                            }
+                        }
                     }
+                } catch (Throwable e) {
+                    ErrorReporter.inst().reportError(getContext(), LMedia.class, e);
                 }
             }
-        }
+        });
     }
 
     @Override

@@ -2,7 +2,10 @@ package ru.vpilot.dsbot.commands;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.vpilot.dsbot.Strings;
+import ru.vpilot.dsbot.loops.LMedia;
 import ru.vpilot.dsbot.tools.TMedia;
 import ru.zont.dsbot2.ZDSBot;
 import ru.zont.dsbot2.commands.CommandAdapter;
@@ -13,10 +16,12 @@ import ru.zont.dsbot2.tools.ZDSBMessages;
 import ru.zont.dsbot2.tools.ZDSBStrings;
 
 import java.util.List;
+import java.util.Objects;
 
 import static ru.vpilot.dsbot.tools.TMedia.*;
 
 public class Media extends CommandAdapter {
+    private static final Logger LOG = LoggerFactory.getLogger(Media.class);
 
     public Media(ZDSBot.GuildContext context) {
         super(context);
@@ -48,8 +53,31 @@ public class Media extends CommandAdapter {
 
     private void get(Input input) {
         EmbedBuilder builder = new EmbedBuilder().setTitle(Strings.STR.getString("media.list.title"));
-        for (String s: data.get()) builder.appendDescription("- " + s + "\n");
+        for (String s: data.get()) builder.appendDescription(listEntry(s));
         input.getChannel().sendMessage(builder.build()).queue();
+    }
+
+    private String listEntry(String s) {
+        String[] media = s.split(":");
+        if (media.length < 2) {
+            LOG.error("Corrupt media entry occurred");
+            return " - ???";
+        }
+
+        String prefix, name;
+        switch (media[0]) {
+            case "ttv" -> {
+                name = media[1];
+                prefix = USRPREFIX_TTV;
+            }
+            case "yt" -> {
+                name = Objects.requireNonNull(YT.getChannelSnippet(media[1])).getSnippet().getTitle();
+                prefix = USRPREFIX_YT;
+            }
+            default -> { return " - ???"; }
+        }
+
+        return String.format(" - [%s](%s)\n", name, prefix + media[1]);
     }
 
     private String toReference(String link) {

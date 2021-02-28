@@ -32,7 +32,8 @@ public class Main {
         public final Entry roles_list = new Entry("0");
         public final Entry role_checked = new Entry("0");
         public final Entry message_checkpoint = new Entry("0");
-        public final Entry channel_media = new Entry("0");
+        public final Entry channel_streams = new Entry("0");
+        public final Entry channel_video = new Entry("0");
 
         public Config() {
             super.prefix = new Entry("p.");
@@ -65,8 +66,9 @@ public class Main {
     }
 
     private static void handleArgs(String[] args) throws LoginException {
-        if (args.length < 2) throw new LoginException("Not enough args");
+        if (args.length < 3) throw new LoginException("Not enough args");
 
         Globals.TWITCH_API_SECRET = args[1];
+        Globals.GOOGLE_API = args[2];
     }
 }
