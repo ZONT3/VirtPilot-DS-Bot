@@ -53,7 +53,7 @@ public class Media extends CommandAdapter {
 
     private void get(Input input) {
         EmbedBuilder builder = new EmbedBuilder().setTitle(Strings.STR.getString("media.list.title"));
-        for (String s: data.get()) builder.appendDescription(listEntry(s));
+        data.get().stream().sorted().forEach(s -> builder.appendDescription(listEntry(s)));
         input.getChannel().sendMessage(builder.build()).queue();
     }
 
@@ -64,20 +64,22 @@ public class Media extends CommandAdapter {
             return " - ???";
         }
 
-        String prefix, name;
+        String prefix, name, src;
         switch (media[0]) {
             case "ttv" -> {
                 name = media[1];
                 prefix = USRPREFIX_TTV;
+                src = "[TTV]";
             }
             case "yt" -> {
                 name = Objects.requireNonNull(YT.getChannelSnippet(media[1])).getSnippet().getTitle();
                 prefix = USRPREFIX_YT;
+                src = "[YT]";
             }
             default -> { return " - ???"; }
         }
 
-        return String.format(" - [%s](%s)\n", name, prefix + media[1]);
+        return String.format(" - `%5s` [%s](%s)\n", src, name, prefix + media[1]);
     }
 
     private String toReference(String link) {
