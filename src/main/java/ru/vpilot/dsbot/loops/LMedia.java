@@ -67,6 +67,8 @@ public class LMedia extends LoopAdapter {
                                     case "live" ->     channelStr.sendMessage(    Msg.ytStream(video)).queue();
                                     default ->         channelVid.sendMessage(     Msg.ytVideo(video)).queue();
                                 }
+
+                                list.add(identity);
                             }
                         }
                     }
