@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalTime;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,8 +78,8 @@ public class TMedia {
     }
 
     public static class YT {
-        public static LocalTime lastContentFetch = null;
-        public static final LocalTime[] updatePoints = {
+        private static HashMap<String, LocalTime> contentFetchMap = new HashMap<>();
+        private static final LocalTime[] updatePoints = {
                 LocalTime.of(15, 5), LocalTime.of(18, 5),
                 LocalTime.of(21, 5), LocalTime.of(22, 5),
                 LocalTime.of(23, 5)
@@ -129,7 +130,7 @@ public class TMedia {
         }
 
         public static List<SearchResult> getVideos(String id) throws IOException {
-            if (!checkPeriod()) return Collections.emptyList();
+            if (!checkPeriod(id)) return Collections.emptyList();
             checkSetup();
 
             try {
@@ -158,10 +159,11 @@ public class TMedia {
             return snippet.size() == 1 ? snippet.get(0) : null;
         }
 
-        private static boolean checkPeriod() {
+        private static boolean checkPeriod(String id) {
+            LocalTime lastContentFetch = contentFetchMap.getOrDefault(id, null);
             LocalTime now = LocalTime.now();
             if (lastContentFetch == null || getPos(now) != getPos(lastContentFetch)) {
-                lastContentFetch = now;
+                contentFetchMap.put(id, now);
                 return true;
             } else return false;
         }
