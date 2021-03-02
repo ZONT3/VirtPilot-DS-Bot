@@ -1,5 +1,6 @@
 package ru.vpilot.dsbot.commands;
 
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import net.dv8tion.jda.api.EmbedBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -7,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import ru.vpilot.dsbot.Strings;
 import ru.vpilot.dsbot.loops.LMedia;
 import ru.vpilot.dsbot.tools.TMedia;
+import ru.zont.dsbot2.ErrorReporter;
 import ru.zont.dsbot2.ZDSBot;
 import ru.zont.dsbot2.commands.CommandAdapter;
 import ru.zont.dsbot2.commands.Input;
@@ -67,14 +69,23 @@ public class Media extends CommandAdapter {
         String prefix, name, src;
         switch (media[0]) {
             case "ttv" -> {
-                name = media[1];
                 prefix = USRPREFIX_TTV;
                 src = "[TTV]";
+                name = media[1];
             }
             case "yt" -> {
-                name = Objects.requireNonNull(YT.getChannelSnippet(media[1])).getSnippet().getTitle();
                 prefix = USRPREFIX_YT;
                 src = "[YT]";
+                try {
+                    name = Objects.requireNonNull(YT.getChannelSnippet(media[1])).getSnippet().getTitle();
+                } catch (Throwable e) {
+                    ErrorReporter.inst().reportError(getContext(), getClass(), e);
+                    String err;
+                    if (e.getCause() != null && e.getCause() instanceof GoogleJsonResponseException)
+                        err = "ERROR: No Quota (%s)";
+                    else err = "ERROR (%s)";
+                    name = String.format(err, media[1]);
+                }
             }
             default -> { return " - ???"; }
         }
