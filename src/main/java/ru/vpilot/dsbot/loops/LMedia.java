@@ -10,6 +10,7 @@ import ru.zont.dsbot2.ErrorReporter;
 import ru.zont.dsbot2.ZDSBot;
 import ru.zont.dsbot2.loops.LoopAdapter;
 import ru.zont.dsbot2.tools.Data;
+import ru.zont.dsbot2.tools.ZDSBMessages;
 
 import static ru.vpilot.dsbot.Main.*;
 import static ru.vpilot.dsbot.tools.TMedia.*;
@@ -48,7 +49,8 @@ public class LMedia extends LoopAdapter {
                             for (Stream stream: TTV.getStreams(media[1])) {
                                 if (list.contains(stream.getId())) continue;
 
-                                channelStr.sendMessage(Msg.ttvStream(stream)).queue();
+                                channelStr.sendMessage(ZDSBMessages.wrapEmbed(Msg.ttvStream(stream),
+                                                "", String.format("<@&%s>", config.role_checked.get()))).queue();
                                 list.add(stream.getId());
                             }
                         }
@@ -63,9 +65,11 @@ public class LMedia extends LoopAdapter {
                                 if (list.contains(identity)) continue;
 
                                 switch (bc) {
+                                    case "live"     -> channelStr
+                                            .sendMessage(ZDSBMessages.wrapEmbed(Msg.ytStream(video),
+                                                    "", String.format("<@&%s>", config.role_checked.get()))).queue();
                                     case "upcoming" -> channelStr.sendMessage(Msg.ytStreamPlan(video)).queue();
-                                    case "live" ->     channelStr.sendMessage(    Msg.ytStream(video)).queue();
-                                    default ->         channelVid.sendMessage(     Msg.ytVideo(video)).queue();
+                                    default         -> channelVid.sendMessage(     Msg.ytVideo(video)).queue();
                                 }
 
                                 list.add(identity);
