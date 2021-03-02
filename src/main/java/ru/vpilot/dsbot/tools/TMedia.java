@@ -78,11 +78,10 @@ public class TMedia {
     }
 
     public static class YT {
-        private static HashMap<String, LocalTime> contentFetchMap = new HashMap<>();
+        private static final HashMap<String, LocalTime> contentFetchMap = new HashMap<>();
         private static final LocalTime[] updatePoints = {
                 LocalTime.of(15, 5), LocalTime.of(18, 5),
-                LocalTime.of(21, 5), LocalTime.of(22, 5),
-                LocalTime.of(23, 5)
+                LocalTime.of(22, 5)
         };
 
         private static YouTube api = null;
