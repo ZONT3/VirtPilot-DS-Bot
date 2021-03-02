@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import ru.vpilot.dsbot.Globals;
 import ru.vpilot.dsbot.loops.LMedia;
 import ru.zont.dsbot2.tools.Data;
+import ru.zont.dsbot2.tools.DataList;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -43,7 +44,7 @@ public class TMedia {
     public static final String PREFIX_TTV = "ttv:";
     public static final String PREFIX_YT = "yt:";
 
-    public static final Data<String> data = new Data<>("media");
+    public static final DataList<String> data = new DataList<>("media");
     public static final String USRPREFIX_TTV = "https://www.twitch.tv/";
     public static final String USRPREFIX_YT = "https://www.youtube.com/channel/";
     public static final String VIDPREFIX_YT = "https://www.youtube.com/watch?v=";
@@ -78,7 +79,7 @@ public class TMedia {
     }
 
     public static class YT {
-        private static final HashMap<String, LocalTime> contentFetchMap = new HashMap<>();
+        private static final Data<HashMap<String, LocalTime>> contentFetch = new Data<>("ytFetch");
         private static final LocalTime[] updatePoints = {
                 LocalTime.of(15, 5), LocalTime.of(18, 5),
                 LocalTime.of(22, 5)
@@ -128,7 +129,7 @@ public class TMedia {
             }
         }
 
-        public static List<SearchResult> getVideos(String id) throws IOException {
+        public static List<SearchResult> getVideos(String id) {
             if (!checkPeriod(id)) return Collections.emptyList();
             checkSetup();
 
@@ -159,12 +160,14 @@ public class TMedia {
         }
 
         private static boolean checkPeriod(String id) {
-            LocalTime lastContentFetch = contentFetchMap.getOrDefault(id, null);
-            LocalTime now = LocalTime.now();
-            if (lastContentFetch == null || getPos(now) != getPos(lastContentFetch)) {
-                contentFetchMap.put(id, now);
-                return true;
-            } else return false;
+            return contentFetch.op(new HashMap<>(), contentFetchMap -> {
+                LocalTime lastContentFetch = contentFetchMap.getOrDefault(id, null);
+                LocalTime now = LocalTime.now();
+                if (lastContentFetch == null || getPos(now) != getPos(lastContentFetch)) {
+                    contentFetchMap.put(id, now);
+                    return true;
+                } else return false;
+            });
         }
 
         private static LocalTime getPos(LocalTime time) {

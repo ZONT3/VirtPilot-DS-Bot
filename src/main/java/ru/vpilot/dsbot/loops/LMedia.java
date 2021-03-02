@@ -9,7 +9,7 @@ import ru.zont.dsbot2.ConfigCaster;
 import ru.zont.dsbot2.ErrorReporter;
 import ru.zont.dsbot2.ZDSBot;
 import ru.zont.dsbot2.loops.LoopAdapter;
-import ru.zont.dsbot2.tools.Data;
+import ru.zont.dsbot2.tools.DataList;
 import ru.zont.dsbot2.tools.ZDSBMessages;
 
 import static ru.vpilot.dsbot.Main.*;
@@ -19,7 +19,7 @@ import static ru.vpilot.dsbot.tools.TMedia.data;
 public class LMedia extends LoopAdapter {
     private static final Logger LOG = LoggerFactory.getLogger(LMedia.class);
 
-    private static final Data<String> committed = new Data<>("mediaCommitted");
+    private static final DataList<String> committed = new DataList<>("mediaCommitted");
 
     public LMedia(ZDSBot.GuildContext context) {
         super(context);
@@ -37,7 +37,7 @@ public class LMedia extends LoopAdapter {
         }
 
         committed.op(list -> {
-            for (String s: data.get()) {
+            for (String s: data.getData()) {
                 String[] media = s.split(":");
                 if (media.length < 2) {
                     LOG.error("Corrupt media entry occurred");

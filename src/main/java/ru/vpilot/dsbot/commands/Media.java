@@ -55,7 +55,7 @@ public class Media extends CommandAdapter {
 
     private void get(Input input) {
         EmbedBuilder builder = new EmbedBuilder().setTitle(Strings.STR.getString("media.list.title"));
-        data.get().stream().sorted().forEach(s -> builder.appendDescription(listEntry(s)));
+        data.getData().stream().sorted().forEach(s -> builder.appendDescription(listEntry(s)));
         input.getChannel().sendMessage(builder.build()).queue();
     }
 
