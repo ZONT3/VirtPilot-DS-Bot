@@ -1,7 +1,9 @@
 package ru.vpilot.dsbot;
 
+import com.sun.net.httpserver.HttpServer;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import ru.vpilot.dsbot.commands.Media;
+import ru.vpilot.dsbot.http.ReportHandler;
 import ru.vpilot.dsbot.listeners.Greetings;
 import ru.vpilot.dsbot.loops.LMedia;
 import ru.vpilot.dsbot.loops.LMemberList;
@@ -12,8 +14,12 @@ import ru.zont.dsbot2.commands.implement.Help;
 import ru.zont.dsbot2.commands.implement.Say;
 
 import javax.security.auth.login.LoginException;
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class Main {
 
@@ -34,6 +40,7 @@ public class Main {
         public final Entry message_checkpoint = new Entry("0");
         public final Entry channel_streams = new Entry("0");
         public final Entry channel_video = new Entry("0");
+        public final Entry channel_report = new Entry("0");
 
         public Config() {
             super.prefix = new Entry("p.");
@@ -44,7 +51,7 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) throws LoginException, InterruptedException {
+    public static void main(String[] args) throws LoginException, InterruptedException, IOException {
         handleArgs(args);
 
         ZDSBotBuilder builder = new ZDSBotBuilder(args[0])
@@ -62,7 +69,7 @@ public class Main {
 
         ZDSBot bot = builder.build();
 
-
+        setupServer(bot.getVoidGuildContext());
     }
 
     private static void handleArgs(String[] args) throws LoginException {
@@ -70,5 +77,13 @@ public class Main {
 
         Globals.TWITCH_API_SECRET = args[1];
         Globals.GOOGLE_API = args[2];
+    }
+
+    private static void setupServer(ZDSBot.GuildContext bot) throws IOException {
+        HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", 13370), 0);
+        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
+        server.createContext("/postForm", new ReportHandler(bot));
+        server.setExecutor(threadPoolExecutor);
+        server.start();
     }
 }
