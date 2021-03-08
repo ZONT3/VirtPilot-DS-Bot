@@ -35,7 +35,7 @@ public class Greetings extends ListenerAdapter {
     public void onGuildMessageReactionAdd(@NotNull GuildMessageReactionAddEvent event) {
         if (event.getUser().isBot()) return;
         if (!event.getMessageId().equals(checkpointID)) return;
-        if (!event.getReactionEmote().getAsCodepoints().equalsIgnoreCase(EMOJI)) return;
+//        if (!event.getReactionEmote().getAsCodepoints().equalsIgnoreCase(EMOJI)) return;
         addRole(event.getGuild(), event.getMember());
     }
 
