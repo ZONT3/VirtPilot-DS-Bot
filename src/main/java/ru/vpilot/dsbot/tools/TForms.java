@@ -3,6 +3,9 @@ package ru.vpilot.dsbot.tools;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.TextChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.vpilot.dsbot.Main;
 import ru.zont.dsbot2.ConfigCaster;
 import ru.zont.dsbot2.ZDSBot;
@@ -12,7 +15,16 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class TForms {
+    private static final Logger LOG = LoggerFactory.getLogger(TForms.class);
+
     public static void newForm(ZDSBot.GuildContext context, JsonObject form) {
+        Main.Config config = ConfigCaster.cast(context.getConfig());
+        TextChannel channel = context.getTChannel(config.channel_report.get());
+        if (channel == null) {
+            LOG.warn("Cannot find channel for forms");
+            return;
+        }
+
         ArrayList<EmbedBuilder> builders = new ArrayList<>();
         builders.add(new EmbedBuilder().setColor(0xf01010));
 
@@ -25,8 +37,7 @@ public class TForms {
             ZDSBMessages.appendDescriptionSplit(parseField(entry.getKey(), entry.getValue().getAsJsonObject().get("data")), builders);
         }
 
-        Main.Config config = ConfigCaster.cast(context.getConfig());
-        ZDSBMessages.sendSplit(context.getTChannel(config.channel_report.get()), builders);
+        ZDSBMessages.sendSplit(channel, builders);
 //        Tools.tryFindTChannel(Commons.getReportsChannelID(), bot.jda).sendMessage(builder.build()).complete();
     }
 

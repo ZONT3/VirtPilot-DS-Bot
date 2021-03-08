@@ -68,6 +68,7 @@ public class Main {
         builder.getJdaBuilder().enableIntents(GatewayIntent.GUILD_MESSAGE_REACTIONS);
 
         ZDSBot bot = builder.build();
+        bot.getJda().awaitReady();
 
         setupServer(bot.getVoidGuildContext());
     }
