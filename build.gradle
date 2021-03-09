@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'ru.vp'
-version '1.1.1'
+version '1.2'
 
 repositories {
     mavenCentral()
@@ -36,7 +36,7 @@ dependencies {
     compile group: 'com.github.twitch4j', name: 'twitch4j', version: '1.1.2'
     // https://mvnrepository.com/artifact/org.jsoup/jsoup
     implementation group: 'org.jsoup', name: 'jsoup', version: '1.13.1'
-
+    compile group: 'com.github.theholywaffle', name: 'teamspeak3-api', version: '1.2.0'
 }
 
 test {

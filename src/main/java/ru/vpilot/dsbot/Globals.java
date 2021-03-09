@@ -5,4 +5,8 @@ public class Globals {
     public static String TWITCH_API_SECRET;
 
     public static String GOOGLE_API;
+
+    public static String tsqHost;
+    public static String tsqLogin;
+    public static String tsqPass;
 }
