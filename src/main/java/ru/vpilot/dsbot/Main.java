@@ -40,6 +40,7 @@ public class Main {
         public final Entry role_checked = new Entry("0");
         public final Entry message_checkpoint = new Entry("0");
         public final Entry channel_streams = new Entry("0");
+        public final Entry channel_posts = new Entry("0");
         public final Entry channel_video = new Entry("0");
         public final Entry channel_report = new Entry("0");
         public final Entry channel_ts = new Entry("0");

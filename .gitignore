@@ -4,6 +4,7 @@
 /log/
 /out/
 /db/
+/py/
 
 # Ignore Gradle GUI config
 gradle-app.setting
