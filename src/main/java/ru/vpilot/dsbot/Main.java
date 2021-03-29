@@ -3,6 +3,7 @@ package ru.vpilot.dsbot;
 import com.sun.net.httpserver.HttpServer;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import ru.vpilot.dsbot.commands.Media;
+import ru.vpilot.dsbot.http.EmbedWebhook;
 import ru.vpilot.dsbot.http.ReportHandler;
 import ru.vpilot.dsbot.listeners.Greetings;
 import ru.vpilot.dsbot.loops.LMedia;
@@ -74,11 +75,12 @@ public class Main {
         ZDSBot bot = builder.build();
         bot.getJda().awaitReady();
 
-        setupServer(bot.getVoidGuildContext());
+
+        setupWebServer(bot.getVoidGuildContext());
     }
 
     private static void handleArgs(String[] args) throws LoginException {
-        if (args.length < 3) throw new LoginException("Not enough args");
+        if (args.length < 5) throw new LoginException("Not enough args");
 
         Globals.TWITCH_API_SECRET = args[1];
         Globals.GOOGLE_API = args[2];
@@ -88,12 +90,15 @@ public class Main {
         Globals.tsqHost  = split[0];
         Globals.tsqLogin = split[1];
         Globals.tsqPass  = split[2];
+
+        Globals.telega = args[4];
     }
 
-    private static void setupServer(ZDSBot.GuildContext bot) throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", 13370), 0);
+    private static void setupWebServer(ZDSBot.GuildContext bot) throws IOException {
+        HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", 1337), 0);
         ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
         server.createContext("/postForm", new ReportHandler(bot));
+        server.createContext("/embed", new EmbedWebhook(bot));
         server.setExecutor(threadPoolExecutor);
         server.start();
     }
