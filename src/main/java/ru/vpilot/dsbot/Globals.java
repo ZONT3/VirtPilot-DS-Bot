@@ -9,5 +9,10 @@ public class Globals {
     public static String tsqHost;
     public static String tsqLogin;
     public static String tsqPass;
+
+    public static String tsqHostVP;
+    public static String tsqLoginVP;
+    public static String tsqPassVP;
+
     public static String telega;
 }
