@@ -5,6 +5,7 @@ import com.google.api.services.youtube.model.SearchResult;
 import net.dv8tion.jda.api.entities.TextChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.vpilot.dsbot.listeners.Greetings;
 import ru.zont.dsbot2.ConfigCaster;
 import ru.zont.dsbot2.ErrorReporter;
 import ru.zont.dsbot2.ZDSBot;
@@ -50,7 +51,7 @@ public class LMedia extends LoopAdapter {
                                 if (list.contains(stream.getId())) continue;
 
                                 channelStr.sendMessage(ZDSBMessages.wrapEmbed(Msg.ttvStream(stream),
-                                                "", "@everyone")).queue();
+                                                "", String.format("<@&%s>", Greetings.ID_ROLE_MEDIA))).queue();
                                 list.add(stream.getId());
                             }
                         }
@@ -67,7 +68,7 @@ public class LMedia extends LoopAdapter {
                                 switch (bc) {
                                     case "live"     -> channelStr
                                             .sendMessage(ZDSBMessages.wrapEmbed(Msg.ytStream(video),
-                                                    "", "@everyone")).queue();
+                                                    "", String.format("<@&%s>", Greetings.ID_ROLE_MEDIA))).queue();
                                     case "upcoming" -> channelStr.sendMessage(Msg.ytStreamPlan(video)).queue();
                                     default         -> channelVid.sendMessage(     Msg.ytVideo(video)).queue();
                                 }

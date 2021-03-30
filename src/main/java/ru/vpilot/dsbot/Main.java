@@ -80,7 +80,7 @@ public class Main {
     }
 
     private static void handleArgs(String[] args) throws LoginException {
-        if (args.length < 5) throw new LoginException("Not enough args");
+        if (args.length < 4) throw new LoginException("Not enough args");
 
         Globals.TWITCH_API_SECRET = args[1];
         Globals.GOOGLE_API = args[2];
@@ -90,12 +90,10 @@ public class Main {
         Globals.tsqHost  = split[0];
         Globals.tsqLogin = split[1];
         Globals.tsqPass  = split[2];
-
-        Globals.telega = args[4];
     }
 
     private static void setupWebServer(ZDSBot.GuildContext bot) throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", 1337), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", 13370), 0);
         ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
         server.createContext("/postForm", new ReportHandler(bot));
         server.createContext("/embed", new EmbedWebhook(bot));
