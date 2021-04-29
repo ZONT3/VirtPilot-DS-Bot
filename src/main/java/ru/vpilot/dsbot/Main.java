@@ -3,10 +3,14 @@ package ru.vpilot.dsbot;
 import com.sun.net.httpserver.HttpServer;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import ru.vpilot.dsbot.commands.Media;
+import ru.vpilot.dsbot.commands.VK;
 import ru.vpilot.dsbot.http.EmbedWebhook;
 import ru.vpilot.dsbot.http.ReportHandler;
 import ru.vpilot.dsbot.listeners.Greetings;
-import ru.vpilot.dsbot.loops.*;
+import ru.vpilot.dsbot.loops.LMedia;
+import ru.vpilot.dsbot.loops.LMemberList;
+import ru.vpilot.dsbot.loops.LTSClientsROSS;
+import ru.vpilot.dsbot.loops.LTSClientsVP;
 import ru.zont.dsbot2.ZDSBot;
 import ru.zont.dsbot2.ZDSBotBuilder;
 import ru.zont.dsbot2.commands.implement.Clear;
@@ -64,7 +68,7 @@ public class Main {
                 .setConfig(new Config())
                 .addCommands(Help.class,
                         Clear.class, Say.class,
-                        Media.class
+                        Media.class, VK.class
                 )
                 .addLoops(LMemberList.class, LMedia.class, LTSClientsVP.class, LTSClientsROSS.class)
                 .setTechAdmins(List.of("375638389195669504", "331524458806247426"))
@@ -77,10 +81,16 @@ public class Main {
 
 
         setupWebServer(bot.getVoidGuildContext());
+
+        Globals.vk2dis = new VK2Dis(bot.getVoidGuildContext(),
+                Globals.vkToken,
+                Globals.vkPath,
+                Globals.vkPath + "/config.json");
+        Globals.vk2dis.start();
     }
 
     private static void handleArgs(String[] args) throws LoginException {
-        if (args.length < 5) throw new LoginException("Not enough args");
+        if (args.length < 7) throw new LoginException("Not enough args");
 
         Globals.TWITCH_API_SECRET = args[1];
         Globals.GOOGLE_API = args[2];
@@ -92,9 +102,13 @@ public class Main {
         Globals.tsqPass  = split[2];
 
         String[] splitVP = args[4].split(";");
-        Globals.tsqHostVP  = split[0];
-        Globals.tsqLoginVP = split[1];
-        Globals.tsqPassVP  = split[2];
+        Globals.tsqHostVP  = splitVP[0];
+        Globals.tsqLoginVP = splitVP[1];
+        Globals.tsqPassVP  = splitVP[2];
+
+        Globals.vkToken = args[5];
+        Globals.npm  = args[6];
+        Globals.vkPath  = args[7];
     }
 
     private static void setupWebServer(ZDSBot.GuildContext bot) throws IOException {

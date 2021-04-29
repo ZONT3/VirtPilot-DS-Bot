@@ -14,5 +14,10 @@ public class Globals {
     public static String tsqLoginVP;
     public static String tsqPassVP;
 
-    public static String telega;
+    //public static String telega;
+
+    public static String npm;
+    public static String vkToken;
+    public static String vkPath;
+    public static VK2Dis vk2dis;
 }

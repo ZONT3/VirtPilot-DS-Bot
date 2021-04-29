@@ -20,8 +20,8 @@ import ru.zont.dsbot2.tools.Commons;
 import java.io.IOException;
 
 public class EmbedWebhook implements HttpHandler {
-    private static Logger LOG = LoggerFactory.getLogger(EmbedWebhook.class);
-    private ZDSBot.GuildContext context;
+    private static final Logger LOG = LoggerFactory.getLogger(EmbedWebhook.class);
+    private final ZDSBot.GuildContext context;
 
     public EmbedWebhook(ZDSBot.GuildContext bot) {
         this.context = bot;
@@ -53,6 +53,6 @@ public class EmbedWebhook implements HttpHandler {
         DataObject dataObject = DataObject.fromJson(arr.get(0).getAsJsonObject().toString());
         MessageEmbed embed = new EntityBuilder(context.getBot().getJda()).createMessageEmbed(dataObject);
 
-        tChannel.sendMessage(new MessageBuilder(content).setEmbed(embed).build()).queue();
+        tChannel.sendMessage(new MessageBuilder(content).setEmbed(embed).build()).queue(message -> LOG.info("Posted new embed."));
     }
 }
