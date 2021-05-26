@@ -9,6 +9,13 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.TextChannel;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.vpilot.dsbot.Globals;
@@ -20,9 +27,7 @@ import ru.zont.dsbot2.tools.Commons;
 import ru.zont.dsbot2.tools.DataList;
 import ru.zont.dsbot2.tools.ZDSBStrings;
 
-import java.io.*;
-import java.net.URL;
-import java.net.URLConnection;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -33,14 +38,14 @@ import static ru.vpilot.dsbot.Strings.STR.getString;
 
 public class LDCSServers extends LoopAdapter {
     private static final Logger LOG = LoggerFactory.getLogger(LDCSServers.class);
-    private static final String CHANNEL_ID = /*"845040939457970207"*/"814559760652304466";
-    private static final String DEFAULT_PORT = "10308";
+    private static final String CHANNEL_ID = "845040939457970207"/*"814502474509451295"*/;
+    public static final String DEFAULT_PORT = "10308";
 
-    private final DataList<String> servers = new DataList<>("dcs_servers");
+    public static final DataList<String> servers = new DataList<>("dcs_servers");
     private final HashMap<String, String> msgMap = new HashMap<>();
 
-    private String cachedData = "{}";
-    private long nextCache = 0;
+    private static String cachedData = "{}";
+    private static long nextCache = 0;
 
     public LDCSServers(ZDSBot.GuildContext context) {
         super(context);
@@ -61,7 +66,7 @@ public class LDCSServers extends LoopAdapter {
 
     @Override
     public long getPeriod() {
-        return 60 * 1000;
+        return 5 * 60 * 1000;
     }
 
     @Override
@@ -87,12 +92,30 @@ public class LDCSServers extends LoopAdapter {
         }
 
         String msgID = msgMap.get(ip);
-        if (msgID == null) msgID = findOrNewMsg(data, channel);
-        if (msgID == null) throw new RuntimeException("Cannot create new message");
+        Message toEdit = tryFindMsg(msgID, channel);
 
-        final Message toEdit = channel.retrieveMessageById(msgID).complete();
+        if (msgID == null || toEdit == null) {
+            msgID = findOrNewMsg(data, channel);
+            toEdit = tryFindMsg(msgID, channel);
+        }
+        if (msgID == null || toEdit == null)
+            throw new RuntimeException("Cannot create new message");
+
+        msgMap.put(ip, msgID);
+
         toEdit.editMessage(buildMsg(data)).queue();
         return msgID;
+    }
+
+    private Message tryFindMsg(String id, TextChannel channel) {
+        if (id != null) {
+            Message msg = null;
+            try {
+                msg = channel.retrieveMessageById(id).complete();
+            } catch (Throwable ignored) { }
+            return msg;
+        }
+        return null;
     }
 
     private Message buildMsg(DCSServerData data) {
@@ -101,17 +124,17 @@ public class LDCSServers extends LoopAdapter {
                         .setTitle(normalizeTitle(data.name))
                         .addField(getString("dcs.players"), "%d / %d".formatted(data.players, data.playersMax), true)
                         .addField(getString("dcs.mission_time"), data.missionTime, true)
-                        .addField("dcs.mission", data.mission, true)
+                        .addField(getString("dcs.mission"), data.mission, true)
                         .setDescription(normalizeDesc(data))
                         .setColor(0x1474A6)
         ).build();
     }
 
     private String normalizeDesc(DCSServerData data) {
-        return getString("dcs.desc.format", data.ip, data.port, ZDSBStrings.trimSnippet(data.description, 715));
+        return getString("dcs.description.format", data.ip, data.port, ZDSBStrings.trimSnippet(data.description, 715));
     }
 
-    private String normalizeTitle(String name) {
+    public static String normalizeTitle(String name) {
         return ZDSBStrings.trimSnippet(name, 64);
     }
 
@@ -138,7 +161,7 @@ public class LDCSServers extends LoopAdapter {
         return msg != null ? msg.getId() : null;
     }
 
-    private DCSServerData findData(String ip) {
+    public static DCSServerData findData(String ip) {
         if (nextCache <= System.currentTimeMillis())
             fetchData();
 
@@ -170,19 +193,17 @@ public class LDCSServers extends LoopAdapter {
         return null;
     }
 
-    private void fetchData() {
+    private static void fetchData() {
         final String resp;
         try {
-            resp = post("https://www.digitalcombatsimulator.com/en/auth/", """
-                    {
-                        "AUTH_FORM": "Y",
-                        "TYPE": "AUTH",
-                        "backurl": "/en/personal/server/?ajax=y",
-                        "USER_LOGIN": "%s",
-                        "USER_PASSWORD": "%s",
-                        "USER_REMEMBER": "Y"
-                    }
-                    """.formatted(Globals.dcsLogin, Globals.dcsPass));
+            resp = post("https://www.digitalcombatsimulator.com/en/personal/server/?login=yes&ajax=y", new LinkedList<>(){{
+                add(new BasicNameValuePair("AUTH_FORM", "Y"));
+                add(new BasicNameValuePair("TYPE", "AUTH"));
+                add(new BasicNameValuePair("backurl", "/en/personal/server/?ajax=y"));
+                add(new BasicNameValuePair("USER_LOGIN", Globals.dcsLogin));
+                add(new BasicNameValuePair("USER_PASSWORD", Globals.dcsPass));
+                add(new BasicNameValuePair("USER_REMEMBER", "Y"));
+            }});
         } catch (IOException e) {
             LOG.error("Cannot fetch DCS Servers.", e);
             return;
@@ -196,34 +217,30 @@ public class LDCSServers extends LoopAdapter {
         }
     }
 
-    private static String post(String urlString, String payload) throws IOException {
-        URL url = new URL(urlString);
-        URLConnection connection = url.openConnection();
-        connection.setDoInput(true);
-        connection.setDoOutput(true);
+    private static String post(String urlString, List<NameValuePair> payload) throws IOException {
+        final CloseableHttpClient client = HttpClients.createDefault();
 
-        connection.connect();
+        final HttpPost post = new HttpPost(urlString);
+        post.setEntity(new UrlEncodedFormEntity(payload));
+        post.setHeader("Accept", "application/x-www-form-urlencoded");
+        post.setHeader("Content-type", "application/x-www-form-urlencoded");
 
-        OutputStream os = connection.getOutputStream();
-        PrintWriter pw = new PrintWriter(new OutputStreamWriter(os));
-        pw.write(payload);
-        pw.close();
+        final CloseableHttpResponse resp = client.execute(post);
+        final String res = IOUtils.toString(resp.getEntity().getContent(), StandardCharsets.UTF_8);
+        resp.close();
 
-        InputStream is = connection.getInputStream();
-        final String res = IOUtils.toString(is, StandardCharsets.UTF_8);
-        is.close();
         return res;
     }
 
-    private static class DCSServerData {
-        String name;
-        String ip;
-        String port;
-        String mission;
-//        long time;
-        int players;
-        int playersMax;
-        String description;
-        String missionTime;
+    public static class DCSServerData {
+        public String name;
+        public String ip;
+        public String port;
+        public String mission;
+//        public long time;
+        public int players;
+        public int playersMax;
+        public String description;
+        public String missionTime;
     }
 }

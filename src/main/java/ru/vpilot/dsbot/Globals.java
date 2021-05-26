@@ -21,6 +21,6 @@ public class Globals {
     public static String vkPath;
     public static VK2Dis vk2dis;
 
-    public static Object dcsLogin;
-    public static Object dcsPass;
+    public static String dcsLogin;
+    public static String dcsPass;
 }

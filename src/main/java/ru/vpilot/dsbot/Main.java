@@ -2,15 +2,14 @@ package ru.vpilot.dsbot;
 
 import com.sun.net.httpserver.HttpServer;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import ru.vpilot.dsbot.commands.Media;
-import ru.vpilot.dsbot.commands.VK;
+import ru.vpilot.dsbot.commands.*;
 import ru.vpilot.dsbot.http.EmbedWebhook;
 import ru.vpilot.dsbot.http.ReportHandler;
 import ru.vpilot.dsbot.listeners.Greetings;
+import ru.vpilot.dsbot.loops.LDCSServers;
 import ru.vpilot.dsbot.loops.LMedia;
 import ru.vpilot.dsbot.loops.LMemberList;
 import ru.vpilot.dsbot.loops.LTSClientsROSS;
-import ru.vpilot.dsbot.loops.LTSClientsVP;
 import ru.zont.dsbot2.ZDSBot;
 import ru.zont.dsbot2.ZDSBotBuilder;
 import ru.zont.dsbot2.commands.implement.Clear;
@@ -68,9 +67,9 @@ public class Main {
                 .setConfig(new Config())
                 .addCommands(Help.class,
                         Clear.class, Say.class,
-                        Media.class, VK.class
+                        Media.class, VK.class, DCS.class
                 )
-                .addLoops(LMemberList.class, LMedia.class, LTSClientsVP.class, LTSClientsROSS.class)
+                .addLoops(LMemberList.class, LMedia.class, /*LTSClientsVP.class,*/ LTSClientsROSS.class, LDCSServers.class)
                 .setTechAdmins(List.of("375638389195669504", "331524458806247426"))
                 .addListeners(new Greetings());
 
@@ -90,7 +89,7 @@ public class Main {
     }
 
     private static void handleArgs(String[] args) throws LoginException {
-        if (args.length < 7) throw new LoginException("Not enough args");
+        if (args.length < 9) throw new LoginException("Not enough args");
 
         Globals.TWITCH_API_SECRET = args[1];
         Globals.GOOGLE_API = args[2];
@@ -109,6 +108,10 @@ public class Main {
         Globals.vkToken = args[5];
         Globals.npm  = args[6];
         Globals.vkPath  = args[7];
+
+        String[] splitDCS = args[8].split(";");
+        Globals.dcsLogin = splitDCS[0];
+        Globals.dcsPass = splitDCS[1];
     }
 
     private static void setupWebServer(ZDSBot.GuildContext bot) throws IOException {
