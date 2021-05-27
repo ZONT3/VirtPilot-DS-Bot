@@ -19,7 +19,6 @@ import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.vpilot.dsbot.Globals;
-import ru.zont.dsbot2.DescribedException;
 import ru.zont.dsbot2.ErrorReporter;
 import ru.zont.dsbot2.ZDSBot;
 import ru.zont.dsbot2.loops.LoopAdapter;
@@ -57,7 +56,12 @@ public class LDCSServers extends LoopAdapter {
 
         LinkedList<String> updated = new LinkedList<>();
         for (String ip: servers.getData()) {
-            final String msg = update(ip, channel);
+            String msg = null;
+            try {
+                msg = update(ip, channel);
+            } catch (Exception e) {
+                ErrorReporter.inst().reportError(getContext(), getClass(), e);
+            }
             if (msg != null) updated.add(msg);
         }
 
@@ -81,15 +85,6 @@ public class LDCSServers extends LoopAdapter {
 
     private String update(String ip, TextChannel channel) {
         final DCSServerData data = findData(ip);
-        if (data == null) {
-            final JsonObject cached = JsonParser.parseString(cachedData).getAsJsonObject();
-            final int total = cached.has("PLAYERS_COUNT")
-                    ? cached.getAsJsonPrimitive("PLAYERS_COUNT").getAsInt()
-                    : 0;
-            servers.op(list -> list.remove(ip));
-            ErrorReporter.inst().reportError(getContext(), getClass(), new DescribedException(getString("dsc.err.noserv.title"), getString("dsc.err.noserv", total)));
-            return null;
-        }
 
         String msgID = msgMap.get(ip);
         Message toEdit = tryFindMsg(msgID, channel);
@@ -103,7 +98,7 @@ public class LDCSServers extends LoopAdapter {
 
         msgMap.put(ip, msgID);
 
-        toEdit.editMessage(buildMsg(data)).queue();
+        toEdit.editMessage(buildMsg(data, ip)).queue();
         return msgID;
     }
 
@@ -118,16 +113,31 @@ public class LDCSServers extends LoopAdapter {
         return null;
     }
 
-    private Message buildMsg(DCSServerData data) {
-        return new MessageBuilder(
-                new EmbedBuilder()
-                        .setTitle(normalizeTitle(data.name))
-                        .addField(getString("dcs.players"), "%d / %d".formatted(data.players, data.playersMax), true)
-                        .addField(getString("dcs.mission_time"), data.missionTime, true)
-                        .addField(getString("dcs.mission"), data.mission, true)
-                        .setDescription(normalizeDesc(data))
-                        .setColor(0x1474A6)
-        ).build();
+    private Message buildMsg(DCSServerData data, String ip) {
+        if (data != null) {
+            return new MessageBuilder(
+                    new EmbedBuilder()
+                            .setTitle(normalizeTitle(data.name))
+                            .addField(getString("dcs.players"), "%d / %d".formatted(data.players, data.playersMax), true)
+                            .addField(getString("dcs.mission_time"), data.missionTime, true)
+                            .addField(getString("dcs.mission"), data.mission, true)
+                            .setDescription(normalizeDesc(data))
+                            .setColor(0x1474A6)
+            ).build();
+
+        } else {
+            final JsonObject cached = JsonParser.parseString(cachedData).getAsJsonObject();
+            final int total = cached.has("PLAYERS_COUNT")
+                    ? cached.getAsJsonPrimitive("PLAYERS_COUNT").getAsInt()
+                    : 0;
+
+            return new MessageBuilder(
+                    new EmbedBuilder()
+                            .setTitle(getString("dsc.err.noserv.title"))
+                            .setDescription(getString("dsc.err.noserv", total, ip))
+                            .setColor(0x1474A6)
+            ).build();
+        }
     }
 
     private String normalizeDesc(DCSServerData data) {
@@ -140,6 +150,7 @@ public class LDCSServers extends LoopAdapter {
 
     private String findOrNewMsg(DCSServerData data, TextChannel channel) {
         final List<Message> found = channel.getHistory().retrievePast(100).complete().parallelStream().filter(msg -> {
+            if (data == null) return false;
             final List<MessageEmbed> embeds = msg.getEmbeds();
             if (embeds.size() > 0) {
                 final String title = embeds.get(0).getTitle();
@@ -156,7 +167,7 @@ public class LDCSServers extends LoopAdapter {
 
 
         final Message msg = channel.sendMessage(new EmbedBuilder()
-                .setTitle("Fetching data for %s:%s...".formatted(data.ip, data.port))
+                .setTitle("Fetching data for %s:%s...".formatted(data != null ? data.ip : "???", data != null ? data.port : "?"))
                 .build()).complete();
         return msg != null ? msg.getId() : null;
     }
@@ -165,38 +176,41 @@ public class LDCSServers extends LoopAdapter {
         if (nextCache <= System.currentTimeMillis())
             fetchData();
 
-        for (JsonElement server: JsonParser.parseString(cachedData).getAsJsonObject().get("SERVERS").getAsJsonArray()) {
-            final JsonObject svObj = server.getAsJsonObject();
-            if (svObj.has("IP_ADDRESS")) {
-                String port = svObj.has("PORT") ? svObj.get("PORT").getAsString() : DEFAULT_PORT;
-                final String svIP = svObj.getAsJsonPrimitive("IP_ADDRESS").getAsString();
+        try {
+            for (JsonElement server: JsonParser.parseString(cachedData).getAsJsonObject().get("SERVERS").getAsJsonArray()) {
+                final JsonObject svObj = server.getAsJsonObject();
+                if (svObj.has("IP_ADDRESS")) {
+                    String port = svObj.has("PORT") ? svObj.get("PORT").getAsString() : DEFAULT_PORT;
+                    final String svIP = svObj.getAsJsonPrimitive("IP_ADDRESS").getAsString();
 
-                if ("%s:%s".formatted(svIP, port).equals(ip)) {
-                    final DCSServerData data = new DCSServerData();
-                    data.name = svObj.getAsJsonPrimitive("NAME").getAsString();
-                    data.ip = svIP;
-                    data.port = port;
-                    data.mission = svObj.getAsJsonPrimitive("MISSION_NAME").getAsString();
-                    data.players = svObj.getAsJsonPrimitive("PLAYERS").getAsInt();
-                    data.playersMax = svObj.getAsJsonPrimitive("PLAYERS_MAX").getAsInt();
-                    data.description = svObj.getAsJsonPrimitive("DESCRIPTION").getAsString();
-                    data.missionTime = svObj.getAsJsonPrimitive("MISSION_TIME_FORMATTED").getAsString();
+                    if ("%s:%s".formatted(svIP, port).equals(ip)) {
+                        final DCSServerData data = new DCSServerData();
+                        data.name = svObj.getAsJsonPrimitive("NAME").getAsString();
+                        data.ip = svIP;
+                        data.port = port;
+                        data.mission = svObj.getAsJsonPrimitive("MISSION_NAME").getAsString();
+                        data.players = svObj.getAsJsonPrimitive("PLAYERS").getAsInt();
+                        data.playersMax = svObj.getAsJsonPrimitive("PLAYERS_MAX").getAsInt();
+                        data.description = svObj.getAsJsonPrimitive("DESCRIPTION").getAsString();
+                        data.missionTime = svObj.getAsJsonPrimitive("MISSION_TIME_FORMATTED").getAsString();
 
-                    if ("No".equals(data.description))
-                        data.description = getString("dcs.description.no");
+                        if ("No".equals(data.description))
+                            data.description = getString("dcs.description.no");
 
-                    return data;
+                        return data;
+                    }
                 }
             }
+        } catch (Exception e) {
+            LOG.error("Cannot parse data", e);
         }
-
         return null;
     }
 
     private static void fetchData() {
         final String resp;
         try {
-            resp = post("https://www.digitalcombatsimulator.com/en/personal/server/?login=yes&ajax=y", new LinkedList<>(){{
+            resp = post("https://www.digitalcombatsimulator.com/en/personal/server/?login=yes&ajax=y", new LinkedList<>() {{
                 add(new BasicNameValuePair("AUTH_FORM", "Y"));
                 add(new BasicNameValuePair("TYPE", "AUTH"));
                 add(new BasicNameValuePair("backurl", "/en/personal/server/?ajax=y"));
@@ -237,7 +251,7 @@ public class LDCSServers extends LoopAdapter {
         public String ip;
         public String port;
         public String mission;
-//        public long time;
+        //        public long time;
         public int players;
         public int playersMax;
         public String description;
