@@ -141,7 +141,7 @@ public class LDCSServers extends LoopAdapter {
     }
 
     private String normalizeDesc(DCSServerData data) {
-        return getString("dcs.description.format", data.ip, data.port, ZDSBStrings.trimSnippet(data.description, 715));
+        return getString("dcs.description.format", data.ip, data.port, ZDSBStrings.trimSnippet(data.description.replaceAll("<br />", "\n").replaceAll("<.+?>", ""), 715));
     }
 
     public static String normalizeTitle(String name) {

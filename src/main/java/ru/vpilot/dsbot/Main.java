@@ -70,7 +70,7 @@ public class Main {
                         Media.class, VK.class, DCS.class
                 )
                 .addLoops(LMemberList.class, LMedia.class, /*LTSClientsVP.class,*/ LTSClientsROSS.class, LDCSServers.class)
-                .setTechAdmins(List.of("375638389195669504", "331524458806247426"))
+                .setTechAdmins(List.of("375638389195669504", "331524458806247426", "304280113367744522"))
                 .addListeners(new Greetings());
 
         builder.getJdaBuilder().enableIntents(GatewayIntent.GUILD_MESSAGE_REACTIONS);
