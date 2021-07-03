@@ -74,12 +74,16 @@ public class DCS extends CommandAdapter {
 
     private void rm(Input input) {
         String link = getLink(input);
-        servers.op(list -> {
+        boolean bool = servers.op(new ArrayList<>(), list -> {
             if (list.remove(toReference(link))) {
                 ZDSBMessages.addOK(input.getMessage());
-                getContext().getBot().getVoidGuildContext().tickLoop(LDCSServers.class);
-            } else ZDSBMessages.printError(input.getChannel(), Strings.STR.getString("err"), Strings.STR.getString("dcs.err.rm"));
+                return true;
+            } else {
+                ZDSBMessages.printError(input.getChannel(), Strings.STR.getString("err"), Strings.STR.getString("dcs.err.rm"));
+                return false;
+            }
         });
+        if (bool) getContext().getBot().getVoidGuildContext().tickLoop(LDCSServers.class);
     }
 
     private void get(Input input) {
